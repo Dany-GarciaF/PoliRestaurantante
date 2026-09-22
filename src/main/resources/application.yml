@@ -1,0 +1,44 @@
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  application:
+    name: poli-restaurante-backend
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+  mvc:
+    problemdetails:
+      enabled: true
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+app:
+  security:
+    jwt:
+      secret-base64: ${JWT_SECRET:}
+      expiration-minutes: ${JWT_EXPIRATION_MINUTES:60}
+
+bootstrap:
+  admin:
+    nombre: ${INITIAL_ADMIN_NAME:}
+    correo: ${INITIAL_ADMIN_EMAIL:}
+    contrasena: ${INITIAL_ADMIN_PASSWORD:}
+
+server:
+  error:
+    include-message: never
