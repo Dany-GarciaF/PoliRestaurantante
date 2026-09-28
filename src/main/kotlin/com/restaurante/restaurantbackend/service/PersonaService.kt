@@ -18,6 +18,12 @@ class PersonaService(
     fun obtenerTodos(): List<Persona> =
         personaRepository.findAll()
 
+    fun obtenerPorNombre(nombre: String): Persona =
+        personaRepository.findByNombre(nombre) ?: throw RuntimeException("Persona no encontrada")
+
+    fun obtenerPorEmail(email: String): Persona =
+        personaRepository.findByEmail(email) ?: throw RuntimeException("Persona no encontrada")
+
     fun actualizar(id: Int, nombre: String?, apellido: String?, email: String?, numDocumento: String?): Persona {
         val persona = obtenerPorId(id)
         val actualizada = persona.copy(

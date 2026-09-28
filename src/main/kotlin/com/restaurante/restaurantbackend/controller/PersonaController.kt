@@ -23,6 +23,14 @@ class PersonaController(
     fun obtenerPorId(@PathVariable id: Int): ResponseEntity<Persona> =
         ResponseEntity.ok(personaService.obtenerPorId(id))
 
+    @GetMapping("/nombre/{nombre}")
+    fun obtenerPorNombre(@PathVariable nombre: String): ResponseEntity<Persona> =
+        ResponseEntity.ok(personaService.obtenerPorNombre(nombre))
+
+    @GetMapping("/email/{email}")
+    fun obtenerPorEmail(@PathVariable email: String): ResponseEntity<Persona> =
+        ResponseEntity.ok(personaService.obtenerPorEmail(email))
+
     @PutMapping("/{id}")
     fun actualizar(
         @PathVariable id: Int,
