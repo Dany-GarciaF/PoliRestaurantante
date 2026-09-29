@@ -1,10 +1,14 @@
 package com.restaurante.restaurantbackend.controller
 
-import com.restaurante.restaurantbackend.entity.Domicilio
-import com.restaurante.restaurantbackend.entity.EstadoDomicilio
+import com.restaurante.restaurantbackend.dto.CambiarEstadoDomicilioRequest
+import com.restaurante.restaurantbackend.dto.CrearDomicilioRequest
+import com.restaurante.restaurantbackend.dto.DomicilioResponse
 import com.restaurante.restaurantbackend.service.DomicilioService
-import org.springframework.http.ResponseEntity
+import jakarta.validation.Valid
+import org.springframework.http.HttpStatus
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.*
+import java.util.UUID
 
 @RestController
 @RequestMapping("/api/domicilios")
@@ -13,25 +17,34 @@ class DomicilioController(
 ) {
 
     @PostMapping
-    fun crear(@RequestBody domicilio: Domicilio): ResponseEntity<Domicilio> =
-        ResponseEntity.ok(domicilioService.crearDomicilio(domicilio))
+    @ResponseStatus(HttpStatus.CREATED)
+    @PreAuthorize("hasAnyRole('MESERO', 'ADMINISTRADOR')")
+    fun crear(
+        @Valid @RequestBody solicitud: CrearDomicilioRequest
+    ): DomicilioResponse = domicilioService.crear(solicitud)
 
     @GetMapping
-    fun listar(): ResponseEntity<List<Domicilio>> =
-        ResponseEntity.ok(domicilioService.listarDomicilios())
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    fun listar(): List<DomicilioResponse> =
+        domicilioService.listar()
 
     @GetMapping("/{id}")
-    fun obtener(@PathVariable id: Long): ResponseEntity<Domicilio> =
-        ResponseEntity.ok(domicilioService.obtenerDomicilio(id))
+    @PreAuthorize("hasAnyRole('MESERO', 'ADMINISTRADOR')")
+    fun obtener(@PathVariable id: UUID): DomicilioResponse =
+        domicilioService.obtener(id)
 
-    @PutMapping("/{id}/estado")
+    @GetMapping("/pedido/{pedidoId}")
+    @PreAuthorize("hasAnyRole('MESERO', 'ADMINISTRADOR')")
+    fun obtenerPorPedido(
+        @PathVariable pedidoId: UUID
+    ): DomicilioResponse =
+        domicilioService.obtenerPorPedido(pedidoId)
+
+    @PatchMapping("/{id}/estado")
+    @PreAuthorize("hasAnyRole('MESERO', 'ADMINISTRADOR')")
     fun cambiarEstado(
-        @PathVariable id: Long,
-        @RequestParam estado: EstadoDomicilio
-    ): ResponseEntity<Domicilio> =
-        ResponseEntity.ok(domicilioService.cambiarEstado(id, estado))
-
-    @DeleteMapping("/{id}")
-    fun cancelar(@PathVariable id: Long): ResponseEntity<Domicilio> =
-        ResponseEntity.ok(domicilioService.cancelarDomicilio(id))
+        @PathVariable id: UUID,
+        @Valid @RequestBody solicitud: CambiarEstadoDomicilioRequest
+    ): DomicilioResponse =
+        domicilioService.cambiarEstado(id, solicitud)
 }
