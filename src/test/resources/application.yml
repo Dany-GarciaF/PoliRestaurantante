@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:polirestaurante;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+
+app:
+  security:
+    jwt:
+      secret-base64: cG9saXJlc3RhdXJhbnRlLXRlc3Qta2V5LXdpdGgtMzItYnl0ZXM=
+
+bootstrap:
+  admin:
+    nombre: Administrador de Pruebas
+    correo: admin@pruebas.local
+    contrasena: clave-segura-de-pruebas
