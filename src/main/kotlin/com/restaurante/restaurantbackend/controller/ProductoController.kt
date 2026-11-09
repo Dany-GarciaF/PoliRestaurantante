@@ -14,7 +14,9 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
+import org.springframework.web.bind.annotation.RequestPart
 import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.multipart.MultipartFile
 import java.util.UUID
 
 @RestController
@@ -36,6 +38,13 @@ class ProductoController(
         @PathVariable id: UUID,
         @Valid @RequestBody solicitud: ProductoRequest
     ): ProductoResponse = productoService.actualizar(id, solicitud)
+
+    @PostMapping("/{id}/imagen", consumes = [org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun subirImagen(@PathVariable id: UUID, @RequestPart("archivo") archivo: MultipartFile): ProductoResponse =
+        productoService.subirImagen(id, archivo)
+
+    @DeleteMapping("/{id}/imagen")
+    fun eliminarImagen(@PathVariable id: UUID): ProductoResponse = productoService.eliminarImagen(id)
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
