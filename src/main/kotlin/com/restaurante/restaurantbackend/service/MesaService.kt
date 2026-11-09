@@ -20,6 +20,10 @@ class MesaService(
     fun listar(): List<MesaResponse> =
         mesaRepository.findAll().map(AdministracionMapper::toResponse)
 
+    fun listarDisponibles(): List<MesaResponse> =
+        mesaRepository.findByActivaTrueAndEstadoOrderByNumeroAsc(EstadoMesa.LIBRE)
+            .map(AdministracionMapper::toResponse)
+
     @Transactional
     fun crear(solicitud: MesaRequest): MesaResponse {
         verificarNumeroDisponible(solicitud.numero, null)
