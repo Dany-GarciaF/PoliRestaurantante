@@ -1,6 +1,7 @@
 package com.restaurante.restaurantbackend.repository
 
 import com.restaurante.restaurantbackend.entity.Mesa
+import com.restaurante.restaurantbackend.entity.EstadoMesa
 import jakarta.persistence.LockModeType
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Lock
@@ -10,6 +11,7 @@ import java.util.UUID
 
 interface MesaRepository : JpaRepository<Mesa, UUID> {
     fun existsByNumero(numero: Int): Boolean
+    fun findByActivaTrueAndEstadoOrderByNumeroAsc(estado: EstadoMesa): List<Mesa>
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select mesa from Mesa mesa where mesa.id = :id")
