@@ -157,6 +157,14 @@
 .thumb { width: 48px; height: 48px; object-fit: cover; border: 2px solid var(--black); border-radius: 10px; background: var(--white); }
 .upload { display: grid; gap: 0.6rem; }
 .upload__preview { width: 100%; max-height: 180px; object-fit: cover; border: 3px solid var(--black); border-radius: var(--radius-m); }
+.cropper { position: relative; width: 100%; overflow: hidden; background: #f6e9d0; border: 2px solid var(--red); border-radius: 12px; cursor: grab; touch-action: none; user-select: none; }
+.cropper.is-drag { cursor: grabbing; }
+.cropper__img { position: absolute; max-width: none; pointer-events: none; }
+.cropper__grid { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(90deg, transparent 33%, rgba(255,255,255,.35) 33% calc(33% + 1px), transparent calc(33% + 1px) 66%, rgba(255,255,255,.35) 66% calc(66% + 1px), transparent calc(66% + 1px)), linear-gradient(transparent 33%, rgba(255,255,255,.35) 33% calc(33% + 1px), transparent calc(33% + 1px) 66%, rgba(255,255,255,.35) 66% calc(66% + 1px), transparent calc(66% + 1px)); }
+.cropper__ctl { display: grid; gap: 0.6rem; }
+.cropper__hint { font-size: 0.85rem; opacity: 0.8; }
+.cropper__row { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.cropper__row input[type="range"] { flex: 1; accent-color: var(--red); }
 .upload__drop { display: grid; place-items: center; gap: 0.3rem; padding: 1rem; text-align: center; border: 3px dashed var(--black); border-radius: var(--radius-m); background: var(--white); cursor: pointer; transition: background var(--dur-fast), transform var(--dur-fast); }
 .upload__drop:hover, .upload__drop.is-over { background: var(--lime); transform: scale(1.02); }
 .upload input[type=file] { display: none; }
