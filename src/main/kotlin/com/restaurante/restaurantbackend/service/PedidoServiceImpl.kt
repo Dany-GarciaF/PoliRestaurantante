@@ -1,8 +1,13 @@
 package com.restaurante.restaurantbackend.service
 
+import com.restaurante.restaurantbackend.dto.ActualizarDetallePedidoRequest
+import com.restaurante.restaurantbackend.dto.AgregarDetallePedidoRequest
 import com.restaurante.restaurantbackend.dto.CambiarEstadoPedidoRequest
 import com.restaurante.restaurantbackend.dto.CrearPedidoRequest
+import com.restaurante.restaurantbackend.dto.FiltroPedidoAdministrativo
 import com.restaurante.restaurantbackend.dto.HistorialEstadoResponse
+import com.restaurante.restaurantbackend.dto.PaginaResponse
+import com.restaurante.restaurantbackend.dto.PedidoAdministrativoResumenResponse
 import com.restaurante.restaurantbackend.dto.PedidoResponse
 import com.restaurante.restaurantbackend.entity.DatosEntrega
 import com.restaurante.restaurantbackend.entity.DetallePedido
@@ -10,21 +15,26 @@ import com.restaurante.restaurantbackend.entity.EstadoMesa
 import com.restaurante.restaurantbackend.entity.EstadoPedido
 import com.restaurante.restaurantbackend.entity.HistorialEstado
 import com.restaurante.restaurantbackend.entity.Mesa
+import com.restaurante.restaurantbackend.entity.MetodoPago
 import com.restaurante.restaurantbackend.entity.Pedido
 import com.restaurante.restaurantbackend.entity.RolUsuario
 import com.restaurante.restaurantbackend.entity.TipoPedido
 import com.restaurante.restaurantbackend.entity.Usuario
 import com.restaurante.restaurantbackend.mapper.PedidoMapper
 import com.restaurante.restaurantbackend.repository.HistorialEstadoRepository
+import com.restaurante.restaurantbackend.repository.DetallePedidoRepository
 import com.restaurante.restaurantbackend.repository.MesaRepository
 import com.restaurante.restaurantbackend.repository.PedidoRepository
 import com.restaurante.restaurantbackend.repository.ProductoRepository
 import com.restaurante.restaurantbackend.repository.UsuarioRepository
 import org.springframework.http.HttpStatus
+import org.springframework.data.domain.Pageable
+import org.springframework.data.jpa.domain.Specification
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
 import java.math.BigDecimal
+import java.time.ZoneOffset
 import java.util.UUID
 
 @Service
@@ -32,10 +42,50 @@ import java.util.UUID
 class PedidoServiceImpl(
     private val pedidoRepository: PedidoRepository,
     private val productoRepository: ProductoRepository,
+    private val detallePedidoRepository: DetallePedidoRepository,
     private val mesaRepository: MesaRepository,
     private val usuarioRepository: UsuarioRepository,
-    private val historialEstadoRepository: HistorialEstadoRepository
+    private val historialEstadoRepository: HistorialEstadoRepository,
+    private val configuracionDomiciliosService: ConfiguracionDomiciliosService
 ) : PedidoService {
+    override fun listarAdministracion(
+        filtro: FiltroPedidoAdministrativo,
+        pageable: Pageable
+    ): PaginaResponse<PedidoAdministrativoResumenResponse> {
+        validarRangoFechas(filtro)
+        val specification = Specification<Pedido> { root, _, criteriaBuilder ->
+            val predicates = mutableListOf<jakarta.persistence.criteria.Predicate>()
+            filtro.estado?.let { predicates += criteriaBuilder.equal(root.get<EstadoPedido>("estado"), it) }
+            filtro.tipo?.let { predicates += criteriaBuilder.equal(root.get<TipoPedido>("tipo"), it) }
+            filtro.meseroId?.let { predicates += criteriaBuilder.equal(root.get<Usuario>("mesero").get<UUID>("id"), it) }
+            filtro.mesaId?.let { predicates += criteriaBuilder.equal(root.get<Mesa>("mesa").get<UUID>("id"), it) }
+            filtro.fechaDesde?.let {
+                predicates += criteriaBuilder.greaterThanOrEqualTo(
+                    root.get("fechaCreacion"),
+                    it.atStartOfDay().atOffset(ZoneOffset.UTC)
+                )
+            }
+            filtro.fechaHasta?.let {
+                predicates += criteriaBuilder.lessThan(
+                    root.get("fechaCreacion"),
+                    it.plusDays(1).atStartOfDay().atOffset(ZoneOffset.UTC)
+                )
+            }
+            criteriaBuilder.and(*predicates.toTypedArray())
+        }
+        val pagina = pedidoRepository.findAll(specification, pageable)
+        return PaginaResponse(
+            contenido = pagina.content.map(PedidoMapper::toAdministracionResumen),
+            pagina = pagina.number,
+            tamano = pagina.size,
+            totalElementos = pagina.totalElements,
+            totalPaginas = pagina.totalPages
+        )
+    }
+
+    override fun obtenerPedidoAdministracion(pedidoId: UUID): PedidoResponse =
+        PedidoMapper.toResponse(obtenerPedido(pedidoId))
+
     @Transactional
     override fun crear(solicitud: CrearPedidoRequest, correoMesero: String): PedidoResponse {
         val mesero = obtenerUsuarioActivo(correoMesero)
@@ -59,26 +109,11 @@ class PedidoServiceImpl(
         )
 
         validarDatosEntrega(solicitud, pedido)
-        pedido.detalles.addAll(solicitud.detalles.map { detalleSolicitud ->
-            val producto = productoRepository.findById(detalleSolicitud.productoId).orElseThrow {
-                ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado.")
-            }
-            if (!producto.disponible || producto.categoria?.activa != true) {
-                throw ResponseStatusException(HttpStatus.CONFLICT, "El producto '${producto.nombre}' no está disponible.")
-            }
-
-            DetallePedido(
-                pedido = pedido,
-                producto = producto,
-                nombreProducto = producto.nombre,
-                precioUnitario = producto.precio,
-                cantidad = detalleSolicitud.cantidad,
-                notas = detalleSolicitud.notas?.trim()
-            )
+        pedido.detalles.addAll(solicitud.detalles.map {
+            crearDetalle(pedido, it.productoId, it.cantidad, it.notas)
         })
-        pedido.total = pedido.detalles.fold(BigDecimal.ZERO) { total, detalle ->
-            total + detalle.precioUnitario.multiply(BigDecimal.valueOf(detalle.cantidad.toLong()))
-        }
+        recalcularTotal(pedido)
+        validarReglasPagoDomicilio(pedido)
 
         val pedidoGuardado = pedidoRepository.save(pedido)
         if (mesa != null) {
@@ -86,6 +121,50 @@ class PedidoServiceImpl(
         }
         registrarHistorial(pedidoGuardado, mesero)
         return PedidoMapper.toResponse(pedidoGuardado)
+    }
+
+    override fun obtenerPedidoMesero(pedidoId: UUID, correoMesero: String): PedidoResponse =
+        PedidoMapper.toResponse(obtenerPedidoPropioMesero(pedidoId, correoMesero))
+
+    @Transactional
+    override fun agregarDetalle(
+        pedidoId: UUID,
+        solicitud: AgregarDetallePedidoRequest,
+        correoMesero: String
+    ): PedidoResponse {
+        val pedido = obtenerPedidoEditable(pedidoId, correoMesero)
+        val detalle = crearDetalle(pedido, solicitud.productoId, solicitud.cantidad, solicitud.notas)
+        pedido.detalles.add(detalle)
+        detallePedidoRepository.save(detalle)
+        recalcularTotal(pedido)
+        return PedidoMapper.toResponse(pedido)
+    }
+
+    @Transactional
+    override fun actualizarDetalle(
+        pedidoId: UUID,
+        detalleId: UUID,
+        solicitud: ActualizarDetallePedidoRequest,
+        correoMesero: String
+    ): PedidoResponse {
+        val pedido = obtenerPedidoEditable(pedidoId, correoMesero)
+        val detalle = obtenerDetalleDePedido(detalleId, pedido)
+        detalle.cantidad = solicitud.cantidad
+        detalle.notas = solicitud.notas?.trim()
+        recalcularTotal(pedido)
+        return PedidoMapper.toResponse(pedido)
+    }
+
+    @Transactional
+    override fun eliminarDetalle(pedidoId: UUID, detalleId: UUID, correoMesero: String): PedidoResponse {
+        val pedido = obtenerPedidoEditable(pedidoId, correoMesero)
+        if (pedido.detalles.size == 1) {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Un pedido debe conservar al menos un producto.")
+        }
+        val detalle = obtenerDetalleDePedido(detalleId, pedido)
+        pedido.detalles.remove(detalle)
+        recalcularTotal(pedido)
+        return PedidoMapper.toResponse(pedido)
     }
 
     @Transactional
@@ -178,10 +257,42 @@ class PedidoServiceImpl(
                 "Un domicilio requiere datos de entrega y método de pago."
             )
         }
+
         if (solicitud.tipo != TipoPedido.DOMICILIO && pedido.datosEntrega != null) {
             throw ResponseStatusException(
                 HttpStatus.BAD_REQUEST,
                 "Los datos de entrega solo aplican a pedidos a domicilio."
+            )
+        }
+        if (solicitud.tipo != TipoPedido.DOMICILIO && solicitud.metodoPago != null) {
+            throw ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "El método de pago de domicilio solo aplica a pedidos a domicilio."
+            )
+        }
+    }
+
+    private fun validarReglasPagoDomicilio(pedido: Pedido) {
+        if (pedido.tipo != TipoPedido.DOMICILIO) {
+            return
+        }
+
+        val configuracion = configuracionDomiciliosService.obtenerEntidadActiva()
+        if (pedido.metodoPago == MetodoPago.EFECTIVO_CONTRAENTREGA &&
+            pedido.total > configuracion.montoMaximoContraentrega
+        ) {
+            throw ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "Los pedidos a domicilio superiores a ${configuracion.montoMaximoContraentrega} deben pagarse virtualmente."
+            )
+        }
+    }
+
+    private fun validarRangoFechas(filtro: FiltroPedidoAdministrativo) {
+        if (filtro.fechaDesde != null && filtro.fechaHasta != null && filtro.fechaDesde > filtro.fechaHasta) {
+            throw ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "fechaDesde no puede ser posterior a fechaHasta."
             )
         }
     }
@@ -225,6 +336,65 @@ class PedidoServiceImpl(
         pedidoRepository.findById(id).orElseThrow {
             ResponseStatusException(HttpStatus.NOT_FOUND, "Pedido no encontrado.")
         }
+
+    private fun obtenerPedidoPropioMesero(pedidoId: UUID, correoMesero: String): Pedido {
+        val mesero = obtenerUsuarioActivo(correoMesero)
+        requireRole(mesero, RolUsuario.MESERO)
+        val pedido = obtenerPedido(pedidoId)
+        if (pedido.mesero?.id != mesero.id) {
+            throw ResponseStatusException(HttpStatus.FORBIDDEN, "No puede acceder a un pedido de otro mesero.")
+        }
+        return pedido
+    }
+
+    private fun obtenerPedidoEditable(pedidoId: UUID, correoMesero: String): Pedido {
+        val pedido = obtenerPedidoPropioMesero(pedidoId, correoMesero)
+        if (pedido.estado != EstadoPedido.PENDIENTE) {
+            throw ResponseStatusException(
+                HttpStatus.CONFLICT,
+                "Solo se puede editar un pedido en estado PENDIENTE."
+            )
+        }
+        return pedido
+    }
+
+    private fun obtenerDetalleDePedido(detalleId: UUID, pedido: Pedido): DetallePedido {
+        val detalle = detallePedidoRepository.findById(detalleId).orElseThrow {
+            ResponseStatusException(HttpStatus.NOT_FOUND, "Detalle de pedido no encontrado.")
+        }
+        if (detalle.pedido?.id != pedido.id) {
+            throw ResponseStatusException(HttpStatus.NOT_FOUND, "El detalle no pertenece al pedido indicado.")
+        }
+        return detalle
+    }
+
+    private fun crearDetalle(
+        pedido: Pedido,
+        productoId: UUID,
+        cantidad: Int,
+        notas: String?
+    ): DetallePedido {
+        val producto = productoRepository.findById(productoId).orElseThrow {
+            ResponseStatusException(HttpStatus.NOT_FOUND, "Producto no encontrado.")
+        }
+        if (!producto.disponible || producto.categoria?.activa != true) {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "El producto '${producto.nombre}' no está disponible.")
+        }
+        return DetallePedido(
+            pedido = pedido,
+            producto = producto,
+            nombreProducto = producto.nombre,
+            precioUnitario = producto.precio,
+            cantidad = cantidad,
+            notas = notas?.trim()
+        )
+    }
+
+    private fun recalcularTotal(pedido: Pedido) {
+        pedido.total = pedido.detalles.fold(BigDecimal.ZERO) { total, detalle ->
+            total + detalle.precioUnitario.multiply(BigDecimal.valueOf(detalle.cantidad.toLong()))
+        }
+    }
 
     private fun obtenerUsuarioActivo(correo: String): Usuario =
         usuarioRepository.findByCorreoIgnoreCase(correo).takeIf { it?.activo == true }
