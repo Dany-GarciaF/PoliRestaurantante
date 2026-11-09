@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Poli Restaurante · Hamburguesas que arman el despelote</title>
+  <meta name="description" content="Poli Restaurante: hamburguesas apiladas sin pudor, salseadas con malicia y pedidos sin papelitos perdidos." />
+  <meta name="theme-color" content="#d9190b" />
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="css/tokens.css" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/landing.css" />
+</head>
+<body>
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+  <div class="scroll-progress" data-scroll-progress aria-hidden="true"></div>
+
+  <header class="site-header" data-header>
+    <nav class="nav" aria-label="Principal">
+      <a class="nav__logo" href="#inicio" aria-label="Poli Restaurante, inicio">
+        <span class="nav__logo-mark">P</span>
+        <span>POLI<b>RESTAURANTE</b></span>
+      </a>
+      <div class="nav__panel" data-nav-panel>
+        <a data-nav-link href="#menu">Menú</a>
+        <a data-nav-link href="#porque">Por qué</a>
+        <a data-nav-link href="#secreto">El secreto</a>
+        <a data-nav-link href="#domicilios">Domicilios</a>
+        <a data-nav-link href="#opiniones">Opiniones</a>
+        <a class="btn btn--red btn--sm nav__cta" href="app.html">Ingresar</a>
+      </div>
+      <button class="nav__toggle" type="button" data-nav-toggle aria-expanded="false" aria-label="Abrir menú">
+        <span></span><span></span><span></span>
+      </button>
+    </nav>
+  </header>
+
+  <main id="contenido">
+    <section class="hero" id="inicio">
+      <div class="hero__flames" aria-hidden="true"></div>
+      <canvas class="fx-canvas" data-fx="embers" aria-hidden="true"></canvas>
+      <div class="container hero__grid">
+        <div class="hero__copy">
+          <span class="sticker hero__sticker">Cero papelitos perdidos</span>
+          <h1 class="hero__title">
+            <span class="line"><span>Hamburguesas</span></span>
+            <span class="line"><span>que arman</span></span>
+            <span class="line"><span>el <em>despelote</em></span></span>
+          </h1>
+          <p class="hero__lead">
+            Apiladas sin pudor. Salseadas con malicia. Pedidas, cocinadas y entregadas sin que una comanda se pierda en el camino.
+          </p>
+          <div class="hero__actions">
+            <a class="btn btn--cream" href="#menu">Ver el menú</a>
+            <a class="btn btn--ghost" href="#domicilios">Pedir a domicilio</a>
+          </div>
+        </div>
+        <div class="hero__art" aria-hidden="true">
+          <div class="hero__burger hero__burger--main" data-parallax="-0.06">          <img src="img/hero/principal.png" alt="" width="900" height="748" fetchpriority="high" onerror="this.parentNode.classList.add('is-missing')" /></div>
+                    <div class="hero__burger hero__burger--left" data-parallax="0.1"><img src="img/hero/izquierda.png" alt="" width="400" height="610" onerror="this.parentNode.classList.add('is-missing')" /></div>
+                    <div class="hero__burger hero__burger--right" data-parallax="0.14"><img src="img/hero/derecha.png" alt="" width="435" height="550" onerror="this.parentNode.classList.add('is-missing')" /></div>
+          <span class="sticker sticker--pink hero__tag hero__tag--a">¡Sin filtro!</span>
+          <span class="sticker sticker--yellow hero__tag hero__tag--b">Con queso de más</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="tape-wrap" aria-hidden="true">
+      <div class="tape">
+        <div class="tape__track"><span>SIN ATAJOS</span><span>★</span><span>SOLO SABOR</span><span>★</span><span>HECHA A MANO</span><span>★</span><span>CERO PAPELITOS</span><span>★</span></div>
+        <div class="tape__track"><span>SIN ATAJOS</span><span>★</span><span>SOLO SABOR</span><span>★</span><span>HECHA A MANO</span><span>★</span><span>CERO PAPELITOS</span><span>★</span></div>
+      </div>
+    </div>
+
+    <section class="section menu" id="menu">
+      <div class="container">
+        <header class="section__head" data-reveal="up">
+          <span class="hand section__kicker">El menú</span>
+          <h2 data-split>Conoce las leyendas</h2>
+          <p>Cada plato está diseñado como una obra maestra: ingredientes audaces, texturas en capas y sabor inolvidable.</p>
+        </header>
+        <div class="menu__tools" data-reveal="up">
+          <div class="chips" data-menu-chips role="group" aria-label="Categorías"></div>
+          <label class="menu__search">
+            <span class="sr-only">Buscar en el menú</span>
+            <input class="input" type="search" placeholder="Buscar un plato…" data-menu-search autocomplete="off" />
+          </label>
+        </div>
+        <p class="menu__note hand" data-menu-note hidden>Vista previa: así luce el menú cuando el servidor está en línea.</p>
+        <div class="menu__grid" data-menu-grid aria-live="polite"></div>
+      </div>
+    </section>
+
+    <section class="section why" id="porque">
+      <div class="container">
+        <header class="section__head section__head--center" data-reveal="up">
+          <span class="hand section__kicker">La diferencia</span>
+          <h2 data-split>¿Por qué elegirnos?</h2>
+        </header>
+        <div class="why__grid">
+          <article class="why-card why-card--a" data-reveal="up" style="--i:0">
+            <span class="why-card__num">01</span>
+            <h3>Cocina conectada</h3>
+            <p>Cada pedido llega a la cocina al instante. Nada de papelitos mojados ni letras ilegibles.</p>
+          </article>
+          <article class="why-card why-card--b" data-reveal="up" style="--i:1">
+            <span class="why-card__num">02</span>
+            <h3>Estados claros</h3>
+            <p>Pendiente, en preparación, listo y entregado: siempre sabes en qué va tu pedido.</p>
+          </article>
+          <article class="why-card why-card--c" data-reveal="up" style="--i:2">
+            <span class="why-card__num">03</span>
+            <h3>Tiempos medidos</h3>
+            <p>Cada cambio queda registrado con hora, para servir más rápido cada semana.</p>
+          </article>
+          <article class="why-card why-card--d" data-reveal="up" style="--i:3">
+            <span class="why-card__num">04</span>
+            <h3>Pago a tu medida</h3>
+            <p>En domicilios pequeños pagas al recibir; en los grandes, de forma virtual y segura.</p>
+          </article>
+        </div>
+        <div class="stats" data-reveal="up">
+          <div><strong data-count="3">0</strong><span>roles trabajando en sincronía</span></div>
+          <div><strong data-count="5">0</strong><span>estados de pedido trazados</span></div>
+          <div><strong data-count="100" data-suffix="%">0</strong><span>digital, cero tickets perdidos</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section secret" id="secreto" data-scrub>
+      <canvas class="fx-canvas" data-fx="dust" aria-hidden="true"></canvas>
+      <div class="container secret__grid">
+        <div class="secret__copy" data-reveal="left">
+          <span class="hand section__kicker">Capa por capa</span>
+          <h2 data-split>¿Qué hace tan especial a nuestra hamburguesa?</h2>
+          <ul class="secret__list">
+            <li><b>Pan de ajonjolí</b> tostado en mantequilla.</li>
+            <li><b>Tomate y salsa</b> de la casa.</li>
+            <li><b>Carne smash</b> sellada a fuego alto.</li>
+            <li><b>Lechuga</b> fresca, nunca triste.</li>
+          </ul>
+          <p class="hand secret__hint">Mira la anatomía de una hamburguesa ↘</p>
+        </div>
+        <div class="secret__art" aria-hidden="true">
+          <div class="anatomy" data-reveal="zoom">
+            <div class="anatomy__ring"></div>
+            <img class="anatomy__img" src="img/hero/principal.png" alt="" />
+            <svg class="anatomy__arrows" viewBox="0 0 100 100" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <g class="arrow arrow--lime" style="--d:0.5s"><path pathLength="100" d="M74 17 C 76 27, 70 31, 63 35"/><path pathLength="100" d="M62 28.5 L63 35 L69 32.5"/></g>
+              <g class="arrow arrow--pink" style="--d:0.8s"><path pathLength="100" d="M17 30 C 14 42, 22 48, 30 51"/><path pathLength="100" d="M25 51.5 L30 51 L27.5 46"/></g>
+              <g class="arrow arrow--yellow" style="--d:1.1s"><path pathLength="100" d="M70 86 C 74 78, 72 70, 66 63"/><path pathLength="100" d="M65.5 69 L66 63 L71.5 66"/></g>
+              <g class="arrow arrow--lime" style="--d:1.4s"><path pathLength="100" d="M22 86 C 18 80, 22 74, 28 68"/><path pathLength="100" d="M22 70 L28 68 L28.5 74.5"/></g>
+            </svg>
+            <div class="callout callout--lime" style="--x:58%; --y:3%; --d:0.4s"><b>Pan de ajonjolí</b><span>Dorado y suavecito.</span></div>
+            <div class="callout callout--pink" style="--x:0%; --y:16%; --d:0.7s"><b>Tomate y salsa</b><span>Jugosos y picosos.</span></div>
+            <div class="callout callout--yellow" style="--x:56%; --y:86%; --d:1s"><b>Carne smash</b><span>Sellada a fuego alto.</span></div>
+            <div class="callout callout--lime" style="--x:0%; --y:86%; --d:1.3s"><b>Lechuga fresca</b><span>Nunca triste.</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section delivery" id="domicilios">
+      <div class="container delivery__grid">
+        <div class="delivery__copy" data-reveal="right">
+          <span class="hand section__kicker">A tu puerta</span>
+          <h2 data-split>Domicilios sin drama</h2>
+          <p>Te llevamos el despelote a casa. Tu pedido pasa por la misma cocina y los mismos estados que en el salón.</p>
+          <ul class="delivery__rules">
+            <li><span>💵</span><div><b>Pedidos pequeños</b><p>Paga en efectivo al recibir.</p></div></li>
+            <li><span>💳</span><div><b>Pedidos grandes</b><p>Superado cierto monto, el pago se hace de forma virtual.</p></div></li>
+          </ul>
+        </div>
+        <div class="delivery__steps" data-reveal="left">
+          <ol>
+            <li><b>Pides</b><span>Con tu mesero o por el canal del restaurante.</span></li>
+            <li><b>Cocinamos</b><span>Seguimos cada etapa con marca de tiempo.</span></li>
+            <li><b>Entregamos</b><span>Caliente, completo y sin sorpresas.</span></li>
+          </ol>
+        </div>
+      </div>
+    </section>
+
+    <section class="section voices" id="opiniones">
+      <div class="container">
+        <header class="section__head" data-reveal="up">
+          <span class="hand section__kicker">Se comenta</span>
+          <h2 data-split>La gente no susurra, habla</h2>
+        </header>
+        <!-- Textos de ejemplo: reemplázalos por opiniones reales de clientes. -->
+        <div class="carousel__controls" data-reveal="up">
+          <button class="btn btn--cream btn--sm btn--icon" type="button" data-carousel-prev aria-label="Anterior">←</button>
+          <button class="btn btn--cream btn--sm btn--icon" type="button" data-carousel-next aria-label="Siguiente">→</button>
+        </div>
+        <div class="carousel" data-carousel tabindex="0" aria-label="Opiniones de ejemplo">
+          <figure class="voice"><blockquote>“Llegó rápido y caliente. Se nota que la cocina sabe qué está haciendo.”</blockquote><figcaption>— Cliente de ejemplo ★★★★★</figcaption></figure>
+          <figure class="voice"><blockquote>“La mejor smash que he probado. Y no se equivocaron con mi pedido.”</blockquote><figcaption>— Cliente de ejemplo ★★★★★</figcaption></figure>
+          <figure class="voice"><blockquote>“Pedí para llevar y estuvo listo justo cuando llegué. Cero esperas.”</blockquote><figcaption>— Cliente de ejemplo ★★★★☆</figcaption></figure>
+          <figure class="voice"><blockquote>“Las papas caóticas son un crimen delicioso.”</blockquote><figcaption>— Cliente de ejemplo ★★★★★</figcaption></figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="cta">
+      <canvas class="fx-canvas" data-fx="stickers" aria-hidden="true"></canvas>
+      <div class="container cta__inner" data-reveal="zoom">
+        <h2 data-split>Las grandes hamburguesas no pasan por accidente</h2>
+        <p class="hand">Sin atajos. Sin rellenos. Sin tonterías.</p>
+        <div class="cta__actions"><a class="btn btn--lime" href="#menu">Elige la tuya</a></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" id="contacto">
+    <div class="container footer__grid">
+      <div>
+        <strong class="footer__brand">POLI<span>RESTAURANTE</span></strong>
+        <p>Poli Restaurante · Comida rápida con actitud.</p>
+      </div>
+      <nav aria-label="Pie de página">
+        <a href="#menu">Menú</a>
+        <a href="#domicilios">Domicilios</a>
+        <a href="#opiniones">Opiniones</a>
+        <a href="app.html">Acceso del personal</a>
+      </nav>
+    </div>
+    <p class="footer__legal">© <span data-year>2026</span> Poli Restaurante. Proyecto académico.</p>
+  </footer>
+
+  <script type="module" src="js/landing/main.js"></script>
+  <script>document.querySelector("[data-year]").textContent = new Date().getFullYear();</script>
+</body>
+</html>
