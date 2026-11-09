@@ -23,6 +23,7 @@ object AdministracionMapper {
             descripcion = producto.descripcion,
             precio = producto.precio,
             disponible = producto.disponible,
+            imagenUrl = producto.imagenUrl,
             categoria = toResponse(requireNotNull(producto.categoria))
         )
 
