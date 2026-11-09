@@ -1,5 +1,7 @@
 package com.restaurante.restaurantbackend.service
 
+import com.restaurante.restaurantbackend.dto.ActualizarDetallePedidoRequest
+import com.restaurante.restaurantbackend.dto.AgregarDetallePedidoRequest
 import com.restaurante.restaurantbackend.dto.CrearPedidoRequest
 import com.restaurante.restaurantbackend.dto.DetallePedidoRequest
 import com.restaurante.restaurantbackend.entity.Categoria
@@ -18,8 +20,10 @@ import java.math.BigDecimal
 import java.util.UUID
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.web.server.ResponseStatusException
 
 @SpringBootTest
 class PedidoServiceIntegrationTests(
@@ -79,5 +83,71 @@ class PedidoServiceIntegrationTests(
         assertEquals(EstadoPedido.ENTREGADO, entregado.estado)
         assertEquals(4, pedidoService.historial(pedido.id, mesero.correo).size)
         assertEquals(EstadoMesa.LIBRE, mesaRepository.findById(requireNotNull(mesa.id)).orElseThrow().estado)
+    }
+
+    @Test
+    fun `mesero puede editar detalles solo mientras pedido esta pendiente`() {
+        val suffix = UUID.randomUUID().toString().take(8)
+        val categoria = categoriaRepository.save(Categoria(nombre = "Categoría edición $suffix"))
+        val productoUno = productoRepository.save(
+            Producto(nombre = "Producto uno $suffix", precio = BigDecimal("10000.00"), categoria = categoria)
+        )
+        val productoDos = productoRepository.save(
+            Producto(nombre = "Producto dos $suffix", precio = BigDecimal("4000.00"), categoria = categoria)
+        )
+        val mesero = usuarioRepository.save(
+            Usuario(
+                nombre = "Mesero edición $suffix",
+                correo = "mesero-edicion-$suffix@pruebas.local",
+                contrasenaHash = "no-usado",
+                rol = RolUsuario.MESERO
+            )
+        )
+        val cocina = usuarioRepository.save(
+            Usuario(
+                nombre = "Cocina edición $suffix",
+                correo = "cocina-edicion-$suffix@pruebas.local",
+                contrasenaHash = "no-usado",
+                rol = RolUsuario.COCINA
+            )
+        )
+
+        val pedidoInicial = pedidoService.crear(
+            CrearPedidoRequest(
+                tipo = TipoPedido.PARA_LLEVAR,
+                detalles = listOf(DetallePedidoRequest(requireNotNull(productoUno.id), 1))
+            ),
+            mesero.correo
+        )
+        val pedidoConSegundoDetalle = pedidoService.agregarDetalle(
+            pedidoInicial.id,
+            AgregarDetallePedidoRequest(requireNotNull(productoDos.id), 2, "Sin hielo"),
+            mesero.correo
+        )
+        assertEquals(BigDecimal("18000.00"), pedidoConSegundoDetalle.total)
+
+        val primerDetalle = pedidoConSegundoDetalle.detalles.first { it.productoId == productoUno.id }
+        val pedidoActualizado = pedidoService.actualizarDetalle(
+            pedidoInicial.id,
+            primerDetalle.id,
+            ActualizarDetallePedidoRequest(3, "Bien cocido"),
+            mesero.correo
+        )
+        assertEquals(BigDecimal("38000.00"), pedidoActualizado.total)
+
+        val segundoDetalle = pedidoActualizado.detalles.first { it.productoId == productoDos.id }
+        val pedidoSinSegundoDetalle = pedidoService.eliminarDetalle(pedidoInicial.id, segundoDetalle.id, mesero.correo)
+        assertEquals(BigDecimal("30000.00"), pedidoSinSegundoDetalle.total)
+        assertEquals(1, pedidoSinSegundoDetalle.detalles.size)
+
+        pedidoService.cambiarEstado(pedidoInicial.id, EstadoPedido.EN_PREPARACION, cocina.correo)
+        val exception = assertFailsWith<ResponseStatusException> {
+            pedidoService.agregarDetalle(
+                pedidoInicial.id,
+                AgregarDetallePedidoRequest(requireNotNull(productoDos.id), 1),
+                mesero.correo
+            )
+        }
+        assertEquals(409, exception.statusCode.value())
     }
 }
