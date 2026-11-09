@@ -1,5 +1,7 @@
 package com.restaurante.restaurantbackend.controller
 
+import com.restaurante.restaurantbackend.dto.ActualizarDetallePedidoRequest
+import com.restaurante.restaurantbackend.dto.AgregarDetallePedidoRequest
 import com.restaurante.restaurantbackend.dto.CambiarEstadoPedidoRequest
 import com.restaurante.restaurantbackend.dto.CrearPedidoRequest
 import com.restaurante.restaurantbackend.dto.HistorialEstadoResponse
@@ -9,10 +11,12 @@ import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.security.core.Authentication
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -31,6 +35,37 @@ class PedidoController(
         @Valid @RequestBody solicitud: CrearPedidoRequest,
         authentication: Authentication
     ): PedidoResponse = pedidoService.crear(solicitud, authentication.name)
+
+    @GetMapping("/{id}")
+    @PreAuthorize("hasRole('MESERO')")
+    fun obtenerPedido(@PathVariable id: UUID, authentication: Authentication): PedidoResponse =
+        pedidoService.obtenerPedidoMesero(id, authentication.name)
+
+    @PostMapping("/{id}/detalles")
+    @PreAuthorize("hasRole('MESERO')")
+    fun agregarDetalle(
+        @PathVariable id: UUID,
+        @Valid @RequestBody solicitud: AgregarDetallePedidoRequest,
+        authentication: Authentication
+    ): PedidoResponse = pedidoService.agregarDetalle(id, solicitud, authentication.name)
+
+    @PutMapping("/{pedidoId}/detalles/{detalleId}")
+    @PreAuthorize("hasRole('MESERO')")
+    fun actualizarDetalle(
+        @PathVariable pedidoId: UUID,
+        @PathVariable detalleId: UUID,
+        @Valid @RequestBody solicitud: ActualizarDetallePedidoRequest,
+        authentication: Authentication
+    ): PedidoResponse =
+        pedidoService.actualizarDetalle(pedidoId, detalleId, solicitud, authentication.name)
+
+    @DeleteMapping("/{pedidoId}/detalles/{detalleId}")
+    @PreAuthorize("hasRole('MESERO')")
+    fun eliminarDetalle(
+        @PathVariable pedidoId: UUID,
+        @PathVariable detalleId: UUID,
+        authentication: Authentication
+    ): PedidoResponse = pedidoService.eliminarDetalle(pedidoId, detalleId, authentication.name)
 
     @PatchMapping("/{id}/estado")
     @PreAuthorize("hasAnyRole('MESERO', 'COCINA')")
