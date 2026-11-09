@@ -35,6 +35,9 @@ class Producto(
     @Column(nullable = false)
     var disponible: Boolean = true,
 
+    @Column(name = "imagen_url", length = 300)
+    var imagenUrl: String? = null,
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "categoria_id", nullable = false)
     var categoria: Categoria? = null
