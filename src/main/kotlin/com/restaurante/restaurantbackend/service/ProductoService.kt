@@ -15,7 +15,8 @@ import java.util.UUID
 @Transactional(readOnly = true)
 class ProductoService(
     private val productoRepository: ProductoRepository,
-    private val categoriaService: CategoriaService
+    private val categoriaService: CategoriaService,
+    private val almacenImagenes: AlmacenImagenes
 ) {
     fun listar(): List<ProductoResponse> =
         productoRepository.findAll().map(AdministracionMapper::toResponse)
@@ -33,6 +34,23 @@ class ProductoService(
         val producto = obtenerEntidad(id)
         verificarNombreDisponible(solicitud.nombre, producto)
         actualizarCampos(producto, solicitud)
+        return AdministracionMapper.toResponse(producto)
+    }
+
+    @Transactional
+    fun subirImagen(id: UUID, archivo: org.springframework.web.multipart.MultipartFile): ProductoResponse {
+        val producto = obtenerEntidad(id)
+        val anterior = producto.imagenUrl
+        producto.imagenUrl = almacenImagenes.guardar(archivo)
+        almacenImagenes.eliminar(anterior)
+        return AdministracionMapper.toResponse(producto)
+    }
+
+    @Transactional
+    fun eliminarImagen(id: UUID): ProductoResponse {
+        val producto = obtenerEntidad(id)
+        almacenImagenes.eliminar(producto.imagenUrl)
+        producto.imagenUrl = null
         return AdministracionMapper.toResponse(producto)
     }
 
