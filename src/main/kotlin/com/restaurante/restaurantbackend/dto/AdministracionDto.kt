@@ -50,7 +50,8 @@ data class ProductoResponse(
     val descripcion: String?,
     val precio: BigDecimal,
     val disponible: Boolean,
-    val categoria: CategoriaResponse
+    val categoria: CategoriaResponse,
+    val imagenUrl: String? = null
 )
 
 data class MesaRequest(
