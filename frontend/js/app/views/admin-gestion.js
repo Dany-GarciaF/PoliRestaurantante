@@ -72,14 +72,30 @@ export function renderCategorias(container) {
 }
 
 function openImageUploader(producto, refresh) {
+  const RATIO = 4 / 3;
+  const OUT_W = 1200;
   let file = null;
+  let img = null;
+  const st = { zoom: 1, fx: 0, fy: 0 };
   const preview = h("img", { class: "upload__preview", alt: "Vista previa", hidden: !producto.imagenUrl, src: imageUrl(producto.imagenUrl) ?? "" });
   const input = h("input", { type: "file", accept: "image/jpeg,image/png,image/webp", id: "img-file" });
   const drop = h("label", { class: "upload__drop", for: "img-file" }, h("strong", {}, "Arrastra una imagen o haz clic"), h("small", {}, "JPG, PNG o WEBP · máx. 3 MB"));
   const save = h("button", { class: "btn btn--red", type: "button", disabled: true }, "Subir imagen");
+
+  const cropImg = h("img", { class: "cropper__img", alt: "", draggable: "false" });
+  const frame = h("div", { class: "cropper", hidden: true }, cropImg, h("span", { class: "cropper__grid", "aria-hidden": "true" }));
+  const zoomInput = h("input", { type: "range", min: "0.5", max: "3", step: "0.01", value: "1", "aria-label": "Zoom" });
+  const controls = h("div", { class: "cropper__ctl", hidden: true },
+    h("p", { class: "cropper__hint" }, "Arrastra para mover · rueda o barra para acercar. Así se verá en la tarjeta del menú."),
+    h("div", { class: "cropper__row" }, h("span", {}, "−"), zoomInput, h("span", {}, "+")),
+    h("div", { class: "cropper__row" },
+      h("button", { class: "btn btn--cream btn--sm", type: "button", onClick: () => fit("cover") }, "Rellenar tarjeta"),
+      h("button", { class: "btn btn--cream btn--sm", type: "button", onClick: () => fit("contain") }, "Ver completa"),
+      h("button", { class: "btn btn--cream btn--sm", type: "button", onClick: () => fit("cover", true) }, "Centrar")));
+
   const modal = openModal({
     title: `Imagen · ${producto.nombre}`,
-    content: h("div", { class: "upload" }, preview, drop, input),
+    content: h("div", { class: "upload" }, preview, frame, controls, drop, input),
     footer: [
       producto.imagenUrl ? h("button", { class: "btn btn--cream", type: "button", onClick: async () => {
         try { await adminService.eliminarImagenProducto(producto.id); toast("Imagen eliminada", "ok"); modal.close(); refresh(); } catch (e) { toast(e.message, "error"); }
@@ -88,23 +104,102 @@ function openImageUploader(producto, refresh) {
     ]
   });
 
+  // Geometría: zoom 1 = la imagen cubre el marco; el desplazamiento se guarda como fracción del marco.
+  function geometry(W, H) {
+    const cover = Math.max(W / img.naturalWidth, H / img.naturalHeight);
+    const iw = img.naturalWidth * cover * st.zoom;
+    const ih = img.naturalHeight * cover * st.zoom;
+    const clamp = (v, size, frameSize) => (size <= frameSize ? 0 : Math.max(-(size - frameSize) / 2, Math.min((size - frameSize) / 2, v)));
+    const ox = clamp(st.fx * W, iw, W);
+    const oy = clamp(st.fy * H, ih, H);
+    return { iw, ih, left: (W - iw) / 2 + ox, top: (H - ih) / 2 + oy, ox, oy };
+  }
+
+  function draw() {
+    if (!img) return;
+    const W = frame.clientWidth;
+    const H = frame.clientHeight;
+    if (!W) return;
+    const g = geometry(W, H);
+    st.fx = g.ox / W;
+    st.fy = g.oy / H;
+    Object.assign(cropImg.style, { width: `${g.iw}px`, height: `${g.ih}px`, left: `${g.left}px`, top: `${g.top}px` });
+    zoomInput.value = String(st.zoom);
+  }
+
+  function fit(mode, onlyCenter = false) {
+    if (!img) return;
+    st.fx = 0;
+    st.fy = 0;
+    if (!onlyCenter) {
+      const a = frame.clientWidth / img.naturalWidth;
+      const b = frame.clientHeight / img.naturalHeight;
+      st.zoom = mode === "contain" ? Math.min(a, b) / Math.max(a, b) : 1;
+    }
+    draw();
+  }
+
   function pick(selected) {
     if (!selected) return;
     if (!["image/jpeg", "image/png", "image/webp"].includes(selected.type)) return toast("Formato no permitido.", "error");
     if (selected.size > 3 * 1024 * 1024) return toast("La imagen supera 3 MB.", "error");
-    file = selected;
-    preview.src = URL.createObjectURL(selected);
-    preview.hidden = false;
-    save.disabled = false;
+    const url = URL.createObjectURL(selected);
+    const loaded = new Image();
+    loaded.onload = () => {
+      img = loaded;
+      file = selected;
+      cropImg.src = url;
+      preview.hidden = true;
+      frame.hidden = false;
+      controls.hidden = false;
+      save.disabled = false;
+      st.zoom = 1; st.fx = 0; st.fy = 0;
+      draw();
+    };
+    loaded.onerror = () => toast("No se pudo leer la imagen.", "error");
+    loaded.src = url;
   }
+
+  frame.style.aspectRatio = String(RATIO);
+  let drag = null;
+  frame.addEventListener("pointerdown", (e) => { drag = { x: e.clientX, y: e.clientY, fx: st.fx, fy: st.fy }; frame.setPointerCapture(e.pointerId); frame.classList.add("is-drag"); });
+  frame.addEventListener("pointermove", (e) => {
+    if (!drag) return;
+    st.fx = drag.fx + (e.clientX - drag.x) / frame.clientWidth;
+    st.fy = drag.fy + (e.clientY - drag.y) / frame.clientHeight;
+    draw();
+  });
+  ["pointerup", "pointercancel"].forEach((ev) => frame.addEventListener(ev, () => { drag = null; frame.classList.remove("is-drag"); }));
+  frame.addEventListener("wheel", (e) => { e.preventDefault(); st.zoom = Math.max(0.5, Math.min(3, st.zoom - e.deltaY * 0.0015)); draw(); }, { passive: false });
+  zoomInput.addEventListener("input", () => { st.zoom = Number(zoomInput.value); draw(); });
+
   input.addEventListener("change", () => pick(input.files[0]));
   ["dragover", "dragenter"].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("is-over"); }));
   ["dragleave", "drop"].forEach((ev) => drop.addEventListener(ev, () => drop.classList.remove("is-over")));
   drop.addEventListener("drop", (e) => { e.preventDefault(); pick(e.dataTransfer.files[0]); });
+
+  async function renderCropped() {
+    const W = frame.clientWidth;
+    const H = frame.clientHeight;
+    const k = OUT_W / W;
+    const canvas = document.createElement("canvas");
+    canvas.width = OUT_W;
+    canvas.height = Math.round(OUT_W / RATIO);
+    const ctx = canvas.getContext("2d");
+    ctx.fillStyle = "#f6e9d0";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    const g = geometry(W, H);
+    ctx.imageSmoothingQuality = "high";
+    ctx.drawImage(img, g.left * k, g.top * k, g.iw * k, g.ih * k);
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", 0.9));
+    if (!blob) throw new Error("No se pudo procesar la imagen.");
+    return new File([blob], "producto.webp", { type: "image/webp" });
+  }
+
   save.addEventListener("click", async () => {
     save.disabled = true;
     try {
-      await adminService.subirImagenProducto(producto.id, file);
+      await adminService.subirImagenProducto(producto.id, await renderCropped());
       toast("Imagen actualizada", "ok");
       modal.close();
       refresh();
