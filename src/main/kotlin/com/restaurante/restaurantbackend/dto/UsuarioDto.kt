@@ -32,6 +32,25 @@ data class UsuarioResponse(
     val activo: Boolean
 )
 
+data class ActualizarUsuarioRequest(
+    @field:NotBlank(message = "El nombre es obligatorio.")
+    @field:Size(max = 120, message = "El nombre no puede superar 120 caracteres.")
+    @field:RestaurantName
+    val nombre: String,
+    @field:Email(message = "El correo no tiene un formato válido.")
+    @field:NotBlank(message = "El correo es obligatorio.")
+    @field:Size(max = 160, message = "El correo no puede superar 160 caracteres.")
+    @field:NoControlCharacters
+    val correo: String,
+    val rol: RolUsuario
+)
+
+data class RestablecerContrasenaRequest(
+    @field:NotBlank(message = "La contraseña es obligatoria.")
+    @field:Size(min = 8, max = 72, message = "La contraseña debe tener entre 8 y 72 caracteres.")
+    val contrasena: String
+)
+
 data class CambiarEstadoUsuarioRequest(
     val activo: Boolean
 )

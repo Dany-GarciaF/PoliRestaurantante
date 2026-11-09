@@ -6,6 +6,8 @@ spring:
     driver-class-name: org.h2.Driver
 
 app:
+  cors:
+    allowed-origins: http://localhost:5500
   security:
     jwt:
       secret-base64: cG9saXJlc3RhdXJhbnRlLXRlc3Qta2V5LXdpdGgtMzItYnl0ZXM=

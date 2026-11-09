@@ -41,3 +41,5 @@ out/
 
 ### Local environment variables ###
 .env
+
+uploads/

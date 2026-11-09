@@ -64,11 +64,29 @@ data class CambiarEstadoPedidoRequest(
 )
 
 data class DetallePedidoResponse(
+    val id: UUID,
     val productoId: UUID,
     val nombreProducto: String,
     val precioUnitario: BigDecimal,
     val cantidad: Int,
     val notas: String?
+)
+
+data class AgregarDetallePedidoRequest(
+    val productoId: UUID,
+    @field:Positive(message = "La cantidad debe ser mayor que cero.")
+    val cantidad: Int,
+    @field:Size(max = 500, message = "Las notas no pueden superar 500 caracteres.")
+    @field:NoControlCharacters
+    val notas: String? = null
+)
+
+data class ActualizarDetallePedidoRequest(
+    @field:Positive(message = "La cantidad debe ser mayor que cero.")
+    val cantidad: Int,
+    @field:Size(max = 500, message = "Las notas no pueden superar 500 caracteres.")
+    @field:NoControlCharacters
+    val notas: String? = null
 )
 
 data class HistorialEstadoResponse(
