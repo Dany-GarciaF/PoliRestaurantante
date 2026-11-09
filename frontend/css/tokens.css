@@ -1,0 +1,50 @@
+/* Design tokens: única fuente de verdad de color, tipografía, espaciado y movimiento. */
+:root {
+  --red: #d9190b;
+  --red-dark: #8f0f06;
+  --red-deep: #5c0903;
+  --black: #131313;
+  --ink: #1c1c1c;
+  --ink-soft: #2a2a2a;
+  --cream: #f6e9d0;
+  --cream-dark: #e6d3ae;
+  --white: #fffaf0;
+  --lime: #c8ff1f;
+  --pink: #ff3fa4;
+  --orange: #ff7a1a;
+  --yellow: #ffd23f;
+  --success: #34d27b;
+  --danger: #ff5a4d;
+
+  --font-display: "Anton", "Impact", "Arial Narrow Bold", sans-serif;
+  --font-hand: "Permanent Marker", "Comic Sans MS", cursive;
+  --font-body: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 5rem;
+  --space-9: 7rem;
+
+  --radius-s: 8px;
+  --radius-m: 16px;
+  --radius-l: 28px;
+  --radius-pill: 999px;
+
+  --shadow-hard: 6px 6px 0 var(--black);
+  --shadow-hard-s: 3px 3px 0 var(--black);
+  --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.35);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 180ms;
+  --dur: 420ms;
+  --dur-slow: 800ms;
+
+  --container: 1200px;
+  --header-h: 72px;
+}
