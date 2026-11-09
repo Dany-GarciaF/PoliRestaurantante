@@ -99,6 +99,7 @@ data class HistorialEstadoResponse(
 data class PedidoResponse(
     val id: UUID,
     val mesaId: UUID?,
+    val numeroMesa: Int? = null,
     val meseroId: UUID?,
     val tipo: TipoPedido,
     val estado: EstadoPedido,
