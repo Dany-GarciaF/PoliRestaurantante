@@ -1,0 +1,10 @@
+.env
+.git
+.gradle
+.idea
+.kotlin
+build
+uploads
+frontend
+postman
+*.md

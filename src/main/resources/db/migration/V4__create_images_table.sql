@@ -1,0 +1,6 @@
+CREATE TABLE imagenes (
+    nombre VARCHAR(80) PRIMARY KEY,
+    tipo_contenido VARCHAR(40) NOT NULL,
+    datos BYTEA NOT NULL,
+    fecha_creacion TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
