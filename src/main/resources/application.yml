@@ -42,6 +42,7 @@ app:
 
   uploads:
     directory: ${UPLOADS_DIR:uploads}
+    provider: ${STORAGE_PROVIDER:local}
 
 bootstrap:
   admin:

@@ -1,5 +1,7 @@
 package com.restaurante.restaurantbackend.service
 
+import com.restaurante.restaurantbackend.entity.Imagen
+import com.restaurante.restaurantbackend.repository.ImagenRepository
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Component
@@ -13,10 +15,13 @@ import java.util.UUID
 /** Guarda imágenes de productos en disco. El tipo se decide por el contenido, no por el nombre enviado. */
 @Component
 class AlmacenImagenes(
-    @Value("\${app.uploads.directory:uploads}") directorio: String
+    @Value("\${app.uploads.directory:uploads}") directorio: String,
+    @Value("\${app.uploads.provider:local}") private val proveedor: String,
+    private val imagenRepository: ImagenRepository
 ) {
     private val raiz: Path = Path.of(directorio).toAbsolutePath().normalize()
     private val carpeta: Path = raiz.resolve("productos")
+    private val usaBaseDatos = proveedor.equals("db", ignoreCase = true)
 
     fun guardar(archivo: MultipartFile): String {
         if (archivo.isEmpty || archivo.size > MAX_BYTES) {
@@ -25,17 +30,38 @@ class AlmacenImagenes(
         val bytes = archivo.bytes
         val extension = detectarExtension(bytes)
             ?: throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato no permitido. Usa JPG, PNG o WEBP.")
-        Files.createDirectories(carpeta)
         val nombre = "${UUID.randomUUID()}.$extension"
-        val destino = carpeta.resolve(nombre).normalize()
-        Files.copy(bytes.inputStream(), destino, StandardCopyOption.REPLACE_EXISTING)
+        if (usaBaseDatos) {
+            imagenRepository.save(Imagen(nombre, tipoContenido(extension), bytes))
+        } else {
+            Files.createDirectories(carpeta)
+            Files.copy(bytes.inputStream(), carpeta.resolve(nombre).normalize(), StandardCopyOption.REPLACE_EXISTING)
+        }
         return "$PREFIJO$nombre"
     }
 
     fun eliminar(url: String?) {
         if (url == null || !url.startsWith(PREFIJO)) return
-        val archivo = carpeta.resolve(url.removePrefix(PREFIJO)).normalize()
+        val nombre = url.removePrefix(PREFIJO)
+        if (!NOMBRE_VALIDO.matches(nombre)) return
+        imagenRepository.deleteById(nombre)
+        val archivo = carpeta.resolve(nombre).normalize()
         if (archivo.startsWith(carpeta)) Files.deleteIfExists(archivo)
+    }
+
+    /** Busca primero en la base de datos y, si no está, en disco (imágenes antiguas). */
+    fun leer(nombre: String): Pair<ByteArray, String>? {
+        if (!NOMBRE_VALIDO.matches(nombre)) return null
+        imagenRepository.findById(nombre).orElse(null)?.let { return it.datos to it.tipoContenido }
+        val archivo = carpeta.resolve(nombre).normalize()
+        if (!archivo.startsWith(carpeta) || !Files.isRegularFile(archivo)) return null
+        return Files.readAllBytes(archivo) to tipoContenido(nombre.substringAfterLast('.'))
+    }
+
+    private fun tipoContenido(extension: String) = when (extension) {
+        "png" -> "image/png"
+        "webp" -> "image/webp"
+        else -> "image/jpeg"
     }
 
     fun raizAbsoluta(): Path = raiz
@@ -50,5 +76,6 @@ class AlmacenImagenes(
     companion object {
         const val PREFIJO = "/uploads/productos/"
         private const val MAX_BYTES = 3L * 1024 * 1024
+        private val NOMBRE_VALIDO = Regex("^[0-9a-f-]{36}\\.(jpg|png|webp)$")
     }
 }
